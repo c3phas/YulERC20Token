@@ -265,8 +265,8 @@ function burn(uint256 amount) external{
         return true;
     }  
 
-    function allowance(address spender) external view returns (uint256){
-        return _allowance[msg.sender][spender];
+    function allowance(address _owner,address spender) external view returns (uint256){
+        return _allowance[_owner][spender];
     }
 
     function balanceOf(address _owner) external view returns (uint256 result){

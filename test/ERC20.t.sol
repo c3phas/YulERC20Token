@@ -80,7 +80,7 @@ contract ERC is Test{
         //Alice wants bob to be able to spend some of her tokens
         erc20token.approve(BOB,10);
         //console.log(erc20token.getAllowance(BOB));
-        assertEq(erc20token.allowance(BOB),10,"Allowance not correct");
+        assertEq(erc20token.allowance(ALICE,BOB),10,"Allowance not correct");
         vm.stopPrank();
     }
 
@@ -103,7 +103,7 @@ contract ERC is Test{
         //Approve Alice to spend some of Bob's tokens
         erc20token.approve(ALICE,25);
         //console.log(erc20token.getAllowance(BOB));
-        assertEq(erc20token.allowance(ALICE),25," First Allowance not correct");
+        assertEq(erc20token.allowance(BOB,ALICE),25," First Allowance not correct");
         assertEq(erc20token.balanceOf(ALICE),0,"Alice's balance before and after approve should not change");
         assertEq(erc20token.balanceOf(JANE),0,"Jane's balance before the transfer not correct");
         vm.stopPrank();
@@ -115,7 +115,7 @@ contract ERC is Test{
         assertEq(erc20token.balanceOf(JANE),20,"Jane's balance should be amount transferedTo");
         assertEq(erc20token.balanceOf(BOB),10,"Bob's balance should be amount minted - transferedTo");
         vm.prank(BOB);
-        assertEq(erc20token.allowance(ALICE),5," Second Allowance not correct");
+        assertEq(erc20token.allowance(BOB,ALICE),5," Second Allowance not correct");
     }
 
     function testTransferMoreThanAllowance() public {
@@ -171,14 +171,14 @@ contract ERC is Test{
         vm.startPrank(BOB);
         erc20token.approve(ALICE,20);
         assertTrue(erc20token.increaseAllowance(ALICE,5));
-        assertEq(erc20token.allowance(ALICE), 25, "Alice allowance should be initial + the value increased with");   
+        assertEq(erc20token.allowance(BOB,ALICE), 25, "Alice allowance should be initial + the value increased with");   
         vm.stopPrank();
     }
     function testIncreaseAllowanceWhenBalanceIsZero() public{
         erc20token.mint(BOB,30);
         vm.startPrank(BOB);
         assertTrue(erc20token.increaseAllowance(ALICE,5));
-        assertEq(erc20token.allowance(ALICE), 5, "Alice allowance should be initial + the value increased with");      
+        assertEq(erc20token.allowance(BOB,ALICE), 5, "Alice allowance should be initial + the value increased with");      
         vm.stopPrank();
     }
     function testIncreaseAllowanceForZeroAddress() public{
@@ -201,7 +201,7 @@ contract ERC is Test{
         vm.startPrank(BOB);
         erc20token.approve(ALICE,20);
         assertTrue(erc20token.decreaseAllowance(ALICE,5));
-        assertEq(erc20token.allowance(ALICE), 15, "Alice allowance should be initial + the value increased with");   
+        assertEq(erc20token.allowance(BOB,ALICE), 15, "Alice allowance should be initial + the value increased with");   
         vm.stopPrank();
     }
     function testDecreaseAllowanceForAddressZero() public{
