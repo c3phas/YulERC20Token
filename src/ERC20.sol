@@ -177,7 +177,7 @@ function burn(uint256 amount) external{
             mstore(0x20,ownerSlot)
             mstore(0x00, caller())
             let finalSlot := keccak256(0x00,0x40)
-            
+
             let allowed := sload(finalSlot)
             if lt(allowed,amount){
                 mstore(0x00,0x9b834218)
@@ -204,6 +204,68 @@ function burn(uint256 amount) external{
         }
         return true;
     }
+
+    function increaseAllowance(address spender,uint256 addedValue) external returns(bool){
+        assembly{
+            if iszero(spender){
+                mstore(0x00,0x7299a729)
+                revert(0x1c,0x04)
+            }
+            //Get the current allowance: allowance[msg.sender][spender]
+            mstore(0x00,caller())
+            mstore(0x20,allowance.slot)
+            let ownerSlot := keccak256(0x00,0x40)
+            mstore(0x20,ownerSlot)
+            mstore(0x00,spender)
+            let spenderSlot := keccak256(0x00,0x40)
+            let allowed := sload(spenderSlot)
+            //We need to add addedValue to the allowed
+            let finalAllowance := add(allowed,addedValue)
+            //Check for overflows
+            if lt(finalAllowance,allowed){
+                mstore(0x00,0x29f4cd11)
+                revert(0x1c,0x04)  
+            }
+            //all good, lets update the mappings
+            sstore(spenderSlot,finalAllowance)
+            //should emit an event
+            mstore(0x00,finalAllowance)
+            log3(0x00,0x20,0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925,caller(),spender)
+        }
+        return true;
+    } 
+
+    function decreaseAllowance(address spender,uint256 subtractedValue) external returns(bool){
+        assembly{
+            if iszero(spender){
+                mstore(0x00,0x7299a729)
+                revert(0x1c,0x04)
+            }
+            //Get the current allowance: allowance[msg.sender][spender]
+            mstore(0x00,caller())
+            mstore(0x20,allowance.slot)
+            let ownerSlot := keccak256(0x00,0x40)
+            mstore(0x20,ownerSlot)
+            mstore(0x00,spender)
+            let spenderSlot := keccak256(0x00,0x40)
+            let allowed := sload(spenderSlot)
+            //we now need to subtract the value passed from allowed
+            //check for overflows
+            if lt(allowed,subtractedValue){
+                mstore(0x00,0x29f4cd11)
+                revert(0x1c,0x04)  
+            }
+            //No overflows
+            let finalAllowance := sub(allowed,subtractedValue)
+            //update the allowance mapping
+            sstore(spenderSlot,finalAllowance)
+            //should emit an event
+            mstore(0x00,finalAllowance)
+            log3(0x00,0x20,0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925,caller(),spender)
+
+        } 
+        return true;
+    }  
 
     function getAllowance(address spender) external view returns (uint256){
         return allowance[msg.sender][spender];

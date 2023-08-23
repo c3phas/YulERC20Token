@@ -110,7 +110,7 @@ contract ERC is Test{
 
         //WE now test if alice can actually transfer on behalf of BOB
         vm.prank(ALICE);
-        erc20token.transferFrom(BOB,JANE,20);
+        assertTrue(erc20token.transferFrom(BOB,JANE,20));
         assertEq(erc20token.balanceOf(ALICE),0,"Alice's balance should be zero");
         assertEq(erc20token.balanceOf(JANE),20,"Jane's balance should be amount transferedTo");
         assertEq(erc20token.balanceOf(BOB),10,"Bob's balance should be amount minted - transferedTo");
@@ -165,6 +165,65 @@ contract ERC is Test{
         vm.expectRevert(0x9b834218);
         vm.prank(BOB);
         erc20token.burn(35); 
+    }
+    function testIncreaseAllowance() public{
+        erc20token.mint(BOB,30);
+        vm.startPrank(BOB);
+        erc20token.approve(ALICE,20);
+        assertTrue(erc20token.increaseAllowance(ALICE,5));
+        assertEq(erc20token.getAllowance(ALICE), 25, "Alice allowance should be initial + the value increased with");   
+        vm.stopPrank();
+    }
+    function testIncreaseAllowanceWhenBalanceIsZero() public{
+        erc20token.mint(BOB,30);
+        vm.startPrank(BOB);
+        assertTrue(erc20token.increaseAllowance(ALICE,5));
+        assertEq(erc20token.getAllowance(ALICE), 5, "Alice allowance should be initial + the value increased with");      
+        vm.stopPrank();
+    }
+    function testIncreaseAllowanceForZeroAddress() public{
+        erc20token.mint(BOB,30);
+        vm.expectRevert(0x7299a729);
+        vm.prank(BOB);
+        assertFalse(erc20token.increaseAllowance(ZERO,5));
+    }
+    function testIncreaseAllowanceOverflows() public{
+        erc20token.mint(BOB,30);
+        vm.startPrank(BOB);
+        erc20token.approve(ALICE,type(uint256).max);
+        vm.expectRevert(0x29f4cd11);
+        erc20token.increaseAllowance(ALICE,1);
+        vm.stopPrank();
+    }
+
+    function testDecreaseAllowance() public{
+        erc20token.mint(BOB,30);
+        vm.startPrank(BOB);
+        erc20token.approve(ALICE,20);
+        assertTrue(erc20token.decreaseAllowance(ALICE,5));
+        assertEq(erc20token.getAllowance(ALICE), 15, "Alice allowance should be initial + the value increased with");   
+        vm.stopPrank();
+    }
+    function testDecreaseAllowanceForAddressZero() public{
+        erc20token.mint(BOB,30);
+        vm.expectRevert(0x7299a729);
+        vm.prank(BOB);
+        assertFalse(erc20token.decreaseAllowance(ZERO,5));
+    }
+    function testDecreaseAllowanceOverflows() public{
+        erc20token.mint(BOB,30);
+        vm.startPrank(BOB);
+        erc20token.approve(ALICE,10);
+        vm.expectRevert(0x29f4cd11);
+        erc20token.decreaseAllowance(ALICE,20);
+        vm.stopPrank();
+    }
+    function testDecreaseAllowanceFromZero() public{
+        erc20token.mint(BOB,30);
+        vm.startPrank(BOB);
+        vm.expectRevert(0x29f4cd11);
+        erc20token.decreaseAllowance(ALICE,20);
+        vm.stopPrank();
     }
     
 }
