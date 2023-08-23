@@ -1,20 +1,17 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.18;
+import {IERC20} from "./IERC20.sol";
 
 
-contract ERC20{
+contract ERC20 is IERC20 {
 /*State variables*/
 
 uint256 private TotalSupply;
 mapping(address => uint256) private balances;
-mapping(address => mapping(address => uint256)) private allowance;
+mapping(address => mapping(address => uint256)) private _allowance;
 
-/*Constants and immutables*/
 address  owner;
 
-/*Events*/
-event Transfer(address indexed from, address indexed to, uint256 amount);
-event Approval(address indexed owner, address indexed spender, uint256 amount);
 //0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925
 /*Errors*/
 error mustBeOwner();
@@ -141,7 +138,7 @@ function burn(uint256 amount) external{
     //@dev approve - Allow spender to spend some of our tokens
     //@param spender - Address to allow
     //@param amount - Amount to allow them to spend
-    function approve(address spender,uint256 amount) external{
+    function approve(address spender,uint256 amount) external returns(bool){
         assembly{
             //we can't delegate to address 0
             if iszero(spender){
@@ -152,7 +149,7 @@ function burn(uint256 amount) external{
             //allowance[msg.sender][spender] = amount
             //Get the locations
             mstore(0x00,caller())
-            mstore(0x20,allowance.slot)
+            mstore(0x20,_allowance.slot)
             let ownersBalanceSlot := keccak256(0x00,0x40)
             //For the second map, we hash ownersBalanceSlot with spender
             mstore(0x00,spender)
@@ -162,6 +159,7 @@ function burn(uint256 amount) external{
             mstore(0x00,amount)
             log3(0x00,0x20,0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925,caller(),spender)
         }
+        return true;
     }
 
     //We now have approval to spend some tokens
@@ -171,7 +169,7 @@ function burn(uint256 amount) external{
         assembly{
             //To get allowed we use the allowance[msg.sender][spender]
             mstore(0x00,from)
-            mstore(0x20,allowance.slot)
+            mstore(0x20,_allowance.slot)
             let ownerSlot := keccak256(0x00,0x40)
 
             mstore(0x20,ownerSlot)
@@ -213,7 +211,7 @@ function burn(uint256 amount) external{
             }
             //Get the current allowance: allowance[msg.sender][spender]
             mstore(0x00,caller())
-            mstore(0x20,allowance.slot)
+            mstore(0x20,_allowance.slot)
             let ownerSlot := keccak256(0x00,0x40)
             mstore(0x20,ownerSlot)
             mstore(0x00,spender)
@@ -243,7 +241,7 @@ function burn(uint256 amount) external{
             }
             //Get the current allowance: allowance[msg.sender][spender]
             mstore(0x00,caller())
-            mstore(0x20,allowance.slot)
+            mstore(0x20,_allowance.slot)
             let ownerSlot := keccak256(0x00,0x40)
             mstore(0x20,ownerSlot)
             mstore(0x00,spender)
@@ -267,8 +265,8 @@ function burn(uint256 amount) external{
         return true;
     }  
 
-    function getAllowance(address spender) external view returns (uint256){
-        return allowance[msg.sender][spender];
+    function allowance(address spender) external view returns (uint256){
+        return _allowance[msg.sender][spender];
     }
 
     function balanceOf(address _owner) external view returns (uint256 result){
